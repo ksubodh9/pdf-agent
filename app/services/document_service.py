@@ -42,7 +42,7 @@ class DocumentService:
     # Upload
     # --------------------------------------------------------------------------
 
-    def save_upload(self, file_bytes: bytes, original_filename: str) -> Document:
+    def save_upload(self, file_bytes: bytes, original_filename: str, user_id: str = None) -> Document:
         t_start = time.perf_counter()
         doc_id = str(uuid.uuid4())
         logger.info(f"[Upload] START  file={original_filename}  size={len(file_bytes)/1024:.1f} KB  doc_id={doc_id}")
@@ -55,7 +55,8 @@ class DocumentService:
         logger.info(f"[Upload] File saved to disk: {file_path}")
 
         doc = Document(
-            id=doc_id, filename=safe_name, original_filename=original_filename,
+            id=doc_id, user_id=user_id,
+            filename=safe_name, original_filename=original_filename,
             file_path=str(file_path), file_size=len(file_bytes), status="processing",
         )
         self.db.add(doc)
@@ -63,12 +64,10 @@ class DocumentService:
         logger.info("[Upload] DB record created (status=processing)")
 
         try:
-            # Step 1: validate
             logger.info("[Upload] Step 1/5 - Validating PDF...")
             validate_pdf(file_path, original_filename)
             logger.info("[Upload] Validation passed")
 
-            # Step 2: extract text + tables + metadata
             logger.info("[Upload] Step 2/5 - Extracting text, tables, and metadata...")
             t_extract = time.perf_counter()
             pdf_content = extract_pdf(file_path, original_filename)
@@ -81,14 +80,9 @@ class DocumentService:
                 f"tables={len(pdf_content.tables)}"
             )
             doc.page_count = pdf_content.page_count
-
-            # Cache full_text in DB so downstream calls never re-parse the file
             doc.full_text = pdf_content.full_text
-
-            # Store native PDF metadata
             doc.doc_metadata = pdf_content.native_metadata
 
-            # Store extracted tables
             if pdf_content.tables:
                 doc.has_tables = True
                 doc.table_count = len(pdf_content.tables)
@@ -119,12 +113,10 @@ class DocumentService:
 
             logger.info(f"[Upload] Text preview: {pdf_content.full_text[:200].strip()!r}...")
 
-            # Step 3: chunk text
             logger.info("[Upload] Step 3/5 - Chunking text...")
             t_chunk = time.perf_counter()
             chunks = chunk_pages(pdf_content.pages, doc_id)
 
-            # Step 3b: also create chunks for tables so they're queryable via RAG
             if pdf_content.tables:
                 table_chunks = _make_table_chunks(pdf_content.tables, doc_id, len(chunks))
                 chunks.extend(table_chunks)
@@ -135,7 +127,6 @@ class DocumentService:
                 f"chunks={len(chunks)}"
             )
 
-            # Step 4: embed + index
             logger.info(f"[Upload] Step 4/5 - Embedding {len(chunks)} chunks...")
             t_embed = time.perf_counter()
             collection_name = index_chunks(doc_id, chunks)
@@ -145,7 +136,6 @@ class DocumentService:
             )
             doc.collection_name = collection_name
 
-            # Step 5: word count in metadata
             total_words = sum(p.word_count for p in pdf_content.pages)
             doc.doc_metadata = {**(doc.doc_metadata or {}), "word_count": total_words}
 
@@ -172,7 +162,6 @@ class DocumentService:
     def classify_document(self, doc: Document) -> Document:
         logger.info(f"[Classify] START doc_id={doc.id}")
         text_preview = self._get_text_preview(doc, max_chars=3000)
-        logger.info(f"[Classify] Using first {len(text_preview)} chars")
         result = self.llm.complete_json(CLASSIFICATION_PROMPT.format(text=text_preview))
         doc.document_type = result.get("document_type", "Other")
         doc.classification_confidence = float(result.get("confidence", 0.5))
@@ -189,7 +178,6 @@ class DocumentService:
         logger.info(f"[Metadata] START doc_id={doc.id}")
         text_preview = self._get_text_preview(doc, max_chars=3000)
         llm_meta = self.llm.complete_json(METADATA_EXTRACTION_PROMPT.format(text=text_preview))
-        # Merge native PDF metadata (already in doc.doc_metadata) with LLM-extracted
         existing = doc.doc_metadata or {}
         merged = {**existing, **{k: v for k, v in llm_meta.items() if v is not None}}
         doc.doc_metadata = merged
@@ -205,7 +193,6 @@ class DocumentService:
     def summarize_document(self, doc: Document) -> Document:
         logger.info(f"[Summarize] START doc_id={doc.id}")
         full_text = self._get_full_text(doc)
-        logger.info(f"[Summarize] Full text length: {len(full_text)} chars")
         text_for_summary = self._truncate_for_llm(full_text, max_chars=12000)
 
         logger.info("[Summarize] Step 1/3 - Short summary...")
@@ -251,7 +238,6 @@ class DocumentService:
 
     def compare_documents(self, doc_a: Document, doc_b: Document) -> dict:
         logger.info(f"[Compare] doc_a={doc_a.id} doc_b={doc_b.id}")
-        # Ensure both have summaries; generate on-the-fly if missing
         if not doc_a.short_summary:
             doc_a = self.summarize_document(doc_a)
         if not doc_b.short_summary:
@@ -307,22 +293,17 @@ class DocumentService:
     # Multi-document Chat
     # --------------------------------------------------------------------------
 
-    def chat_multi(self, doc_ids: list[str], doc_map: dict, user_message: str) -> dict:
-        """
-        Chat across multiple documents. doc_map is {doc_id: Document}.
-        """
+    def chat_multi(self, doc_ids: list, doc_map: dict, user_message: str) -> dict:
         logger.info(f"[MultiChat] docs={doc_ids}  question={user_message!r}")
 
         t_retrieve = time.perf_counter()
         chunks = retrieve_chunks_multi(doc_ids, user_message, top_k=settings.top_k_retrieval)
         logger.info(f"[MultiChat] Retrieved {len(chunks)} chunks in {time.perf_counter()-t_retrieve:.2f}s")
 
-        # Enrich chunks with document names
         for c in chunks:
             did = c.get("doc_id", "")
-            c["document_name"] = doc_map.get(did, {}).original_filename if did in doc_map else did
+            c["document_name"] = doc_map[did].original_filename if did in doc_map else did
 
-        # Build context with document attribution
         context_parts = []
         for i, c in enumerate(chunks, 1):
             doc_name = c.get("document_name", "Unknown")
@@ -365,8 +346,11 @@ class DocumentService:
     def get_document(self, doc_id: str) -> Optional[Document]:
         return self.db.query(Document).filter(Document.id == doc_id).first()
 
-    def get_all_ready_documents(self) -> list[Document]:
-        return self.db.query(Document).filter(Document.status == "ready").all()
+    def get_all_ready_documents(self, user_id: str = None) -> list:
+        q = self.db.query(Document).filter(Document.status == "ready")
+        if user_id:
+            q = q.filter(Document.user_id == user_id)
+        return q.order_by(Document.created_at.desc()).all()
 
     # --------------------------------------------------------------------------
     # Private helpers
@@ -383,7 +367,16 @@ class DocumentService:
         context = "\n\n---\n\n".join(context_parts)
         history = self._format_history(doc_id, last_n=6) if include_history else ""
 
-        prompt = QA_USER_PROMPT.format(context=context, history=history, question=user_message)
+        # Escape curly braces in user-supplied content so str.format() doesn't
+        # misinterpret them as format placeholders (e.g. code snippets, JSON).
+        def _esc(s: str) -> str:
+            return s.replace("{", "{{").replace("}", "}}")
+
+        prompt = QA_USER_PROMPT.format(
+            context=_esc(context),
+            history=_esc(history),
+            question=_esc(user_message),
+        )
         answer = self.llm.complete(prompt, system_prompt=QA_SYSTEM_PROMPT, temperature=0.1)
 
         citations = [
@@ -398,11 +391,9 @@ class DocumentService:
         return answer, citations
 
     def _get_full_text(self, doc: Document) -> str:
-        # Use cached full_text from DB — never re-parse the file
         if doc.full_text:
             return doc.full_text
-        # Fallback: re-parse (only for documents uploaded before this version)
-        logger.warning(f"[Service] full_text not cached for doc {doc.id} — re-parsing")
+        logger.warning(f"[Service] full_text not cached for doc {doc.id} -- re-parsing")
         try:
             pdf_content = extract_pdf(Path(doc.file_path), doc.original_filename)
             doc.full_text = pdf_content.full_text
@@ -436,14 +427,15 @@ class DocumentService:
 # Helper: make RAG chunks from extracted tables
 # --------------------------------------------------------------------------
 
-def _make_table_chunks(tables, doc_id: str, start_index: int) -> list[TextChunk]:
-    """Wrap each extracted table as a TextChunk so it's indexed in ChromaDB."""
+def _make_table_chunks(tables, doc_id: str, start_index: int) -> list:
+    """Wrap each extracted table as a TextChunk so it is indexed in ChromaDB."""
     chunks = []
     for i, table in enumerate(tables):
         text = f"{table.caption}\n\n{table.markdown}"
         chunks.append(
             TextChunk(
-                chunk_id=f"doc_{doc_id}_table_{i}",
+                chunk_id=f"{doc_id}_table_{start_index + i}",
+                doc_id=doc_id,
                 text=text,
                 page_number=table.page_number,
                 chunk_index=start_index + i,

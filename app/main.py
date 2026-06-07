@@ -2,16 +2,19 @@
 FastAPI application entry point.
 """
 
+import os as _os
+import threading
+import logging
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import time
-import logging
-import threading
 
 from app.config.settings import get_settings
 from app.database.base import init_db
 from app.api.routes import router
+from app.api.admin import router as admin_router
 
 settings = get_settings()
 logging.basicConfig(
@@ -30,13 +33,26 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# CORS
+_CORS_ORIGINS = [
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+_frontend_url = _os.getenv("FRONTEND_URL")
+if _frontend_url:
+    _CORS_ORIGINS.append(_frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501", "http://127.0.0.1:8501"],
+    allow_origins=_CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def add_process_time(request: Request, call_next):
@@ -45,6 +61,7 @@ async def add_process_time(request: Request, call_next):
     elapsed = time.perf_counter() - start
     response.headers["X-Process-Time"] = f"{elapsed:.3f}s"
     return response
+
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
@@ -61,10 +78,6 @@ async def startup():
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     settings.vectorstore_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ensure the SQLite DB directory exists and clean up stale lock files.
-    # Stale -journal / -wal / -shm files left from a previous crash can trigger
-    # SQLITE_IOERR_DELETE (code 2570) even when journal_mode=MEMORY is set,
-    # because SQLite tries to remove the old file before applying the new mode.
     from pathlib import Path
     import re
     db_path_match = re.match(r"sqlite:///(.+)", settings.database_url)
@@ -83,8 +96,6 @@ async def startup():
     init_db()
     logger.info("Database initialised.")
 
-    # Pre-warm embedding model in a background thread so startup stays fast.
-    # The model is cached (lru_cache) so this one load serves all requests.
     def _warm_embeddings():
         try:
             from app.rag.embeddings import get_embedding_model
@@ -95,7 +106,6 @@ async def startup():
 
     threading.Thread(target=_warm_embeddings, daemon=True).start()
 
-    # Quick Ollama reachability check (no warmup - keeps RAM low)
     if settings.llm_provider == "ollama":
         from app.utils.ollama_utils import is_ollama_running, get_ollama_base_url, is_model_available
         base_url = get_ollama_base_url(settings.ollama_host, settings.ollama_port)
@@ -112,6 +122,8 @@ async def startup():
 
 
 app.include_router(router, prefix="/api/v1", tags=["PDF Agent"])
+app.include_router(admin_router, prefix="/api/v1", tags=["Admin"])
+
 
 @app.get("/health")
 async def health():

@@ -1,0 +1,57 @@
+services:
+  # ──────────────────────────────────────────────────────────────
+  # PDF Agent — FastAPI backend
+  # Free tier: 512 MB RAM, 0.1 CPU, sleeps after 15 min inactivity
+  # ──────────────────────────────────────────────────────────────
+  - type: web
+    name: pdf-agent-backend
+    runtime: python
+    region: oregon
+    plan: free
+
+    # Render looks for app code in the repo root or a specified directory.
+    # All source files (app/, requirements.txt, etc.) live under pdf-agent/.
+    rootDir: pdf-agent
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    # Persistent disk — stores ChromaDB vector data between deploys.
+    # Free tier: 1 GB.  Upgrade the plan for more.
+    disk:
+      name: pdf-agent-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # --- Database ---
+      - key: DATABASE_URL
+        sync: false   # set in Render dashboard (Supabase PostgreSQL connection string)
+
+      # --- Supabase Auth ---
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      # --- LLM ---
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # --- Storage paths (point inside the persistent disk) ---
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: VECTORSTORE_DIR
+        value: /data/vectorstore
+
+      # --- CORS ---
+      - key: FRONTEND_URL
+        sync: false   # e.g. https://pdf-agent.vercel.app
+
+      # --- App ---
+      - key: MAX_FILE_SIZE_MB
+        value: "50"

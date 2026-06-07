@@ -17,6 +17,8 @@ Endpoints:
   DELETE /document/{doc_id}         Delete a document
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi import status as http_status
 from fastapi.concurrency import run_in_threadpool
@@ -26,6 +28,8 @@ from app.database.base import get_db
 from app.services.llm_service import get_llm_service, LLMService, LLMError
 from app.services.document_service import DocumentService
 from app.rag.vectorstore import delete_collection
+from app.middleware.auth import get_optional_user
+from app.models.usage import UsageEvent
 from app.schemas.document import (
     UploadResponse,
     ClassifyResponse,
@@ -58,6 +62,20 @@ def get_document_service(
     return DocumentService(db=db, llm=llm)
 
 
+def _track(db: Session, user: Optional[dict], event_type: str, doc_id: Optional[str] = None):
+    """Fire-and-forget usage event. Never raises."""
+    try:
+        ev = UsageEvent(
+            user_id=user.get("user_id") if user else None,
+            document_id=doc_id,
+            event_type=event_type,
+        )
+        db.add(ev)
+        db.commit()
+    except Exception:
+        pass  # analytics must never break the main request
+
+
 def _get_doc_or_404(doc_id: str, svc: DocumentService):
     doc = svc.get_document(doc_id)
     if not doc:
@@ -85,6 +103,7 @@ async def upload_pdf(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     svc: DocumentService = Depends(get_document_service),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
     """
     Upload a PDF document.
@@ -109,8 +128,10 @@ async def upload_pdf(
 
     # save_upload does blocking work (disk write, PDF parse, embedding) -
     # run it in a worker thread so the event loop (and /health) stays responsive.
-    doc = await run_in_threadpool(svc.save_upload, file_bytes, file.filename or "document.pdf")
+    user_id = user.get("user_id") if user else None
+    doc = await run_in_threadpool(svc.save_upload, file_bytes, file.filename or "document.pdf", user_id)
 
+    _track(svc.db, user, "upload", doc.id)
     return UploadResponse(
         document_id=doc.id,
         filename=doc.original_filename,
@@ -136,6 +157,7 @@ async def upload_pdf(
 def classify_document(
     doc_id: str,
     svc: DocumentService = Depends(get_document_service),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
     doc = _get_doc_or_404(doc_id, svc)
     _require_ready(doc)
@@ -145,6 +167,7 @@ def classify_document(
     except LLMError as e:
         raise HTTPException(status_code=429 if e.retry_after else 502, detail={"message": str(e), "retry_after": e.retry_after})
 
+    _track(svc.db, user, "classify", doc_id)
     return ClassifyResponse(
         document_id=doc.id,
         document_type=doc.document_type,
@@ -158,6 +181,7 @@ def classify_document(
 def summarize_document(
     doc_id: str,
     svc: DocumentService = Depends(get_document_service),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
     doc = _get_doc_or_404(doc_id, svc)
     _require_ready(doc)
@@ -169,6 +193,7 @@ def summarize_document(
     except LLMError as e:
         raise HTTPException(status_code=429 if e.retry_after else 502, detail={"message": str(e), "retry_after": e.retry_after})
 
+    _track(svc.db, user, "summarize", doc_id)
     return SummaryResponse(
         document_id=doc.id,
         short_summary=doc.short_summary or "",
@@ -185,6 +210,7 @@ def summarize_document(
 def chat_with_document(
     request: ChatRequest,
     svc: DocumentService = Depends(get_document_service),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
     doc = _get_doc_or_404(request.document_id, svc)
     _require_ready(doc)
@@ -193,7 +219,12 @@ def chat_with_document(
         result = svc.chat(doc, request.message, request.include_history)
     except LLMError as e:
         raise HTTPException(status_code=429 if e.retry_after else 502, detail={"message": str(e), "retry_after": e.retry_after})
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"[Chat] Unexpected error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail={"message": f"Chat failed: {type(e).__name__}: {e}"})
 
+    _track(svc.db, user, "chat", request.document_id)
     citations = [Citation(**c) for c in result["citations"]]
     return ChatResponse(
         document_id=doc.id,
@@ -349,8 +380,10 @@ def compare_documents(
 @router.get("/documents", response_model=list[DocumentDetail])
 def list_documents(
     svc: DocumentService = Depends(get_document_service),
+    user: Optional[dict] = Depends(get_optional_user),
 ):
-    docs = svc.get_all_ready_documents()
+    user_id = user.get("user_id") if user else None
+    docs = svc.get_all_ready_documents(user_id=user_id)
     return [DocumentDetail.model_validate(d) for d in docs]
 
 

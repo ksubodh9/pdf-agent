@@ -18,9 +18,15 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
-    # LLM Provider
+    # LLM Provider — primary provider used for all calls
     # Options: ollama | groq | huggingface | openai | anthropic | gemini
-    llm_provider: str = Field(default="gemini", description="LLM provider to use")
+    llm_provider: str = Field(default="gemini", description="Primary LLM provider")
+
+    # Fallback chain — comma-separated providers tried in order when primary fails
+    # Example: "gemini,groq" tries Gemini first, falls back to Groq on rate-limit/auth error
+    llm_fallback_chain: str = Field(default="", description="Comma-separated fallback providers")
+
+    # API keys
     openai_api_key: str = Field(default="", description="OpenAI API key")
     gemini_api_key: str = Field(default="", description="Google Gemini API key")
     anthropic_api_key: str = Field(default="", description="Anthropic API key")
@@ -29,12 +35,16 @@ class Settings(BaseSettings):
 
     # LLM Models
     openai_model: str = "gpt-4o-mini"
-    gemini_model: str = "gemini-flash-latest"  # stable alias, always points to latest Flash
+    # Comma-separated Gemini models tried in order (rate-limit fallback within Gemini)
+    # Valid names: gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro
+    gemini_model: str = "gemini-2.0-flash"
+    gemini_models: str = Field(default="", description="Comma-separated Gemini model names to try in order")
     anthropic_model: str = "claude-3-haiku-20240307"
     groq_model: str = "llama-3.1-8b-instant"
+    # Multiple Groq models tried in order on rate-limit
+    groq_models: str = Field(default="", description="Comma-separated Groq model names to try in order")
     huggingface_model: str = "mistralai/Mistral-7B-Instruct-v0.3"
-    # Ollama local models - auto-pulled on startup if not present
-    # Options: llama3.1:8b | mistral:7b | phi3:mini | gemma2:9b | llama3.2:3b
+    # Ollama local models
     ollama_model: str = "llama3.2:latest"
     ollama_host: str = "localhost"
     ollama_port: int = 11434
@@ -61,25 +71,22 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 60
     rate_limit_window: int = 60  # seconds
 
+    # Supabase (required for auth in production)
+    # JWT secret: Supabase dashboard -> Settings -> API -> JWT Secret
+    supabase_jwt_secret: str = Field(default="", description="Supabase JWT secret for token verification")
+    # Service role key: used by admin endpoints to query auth.users
+    # Supabase dashboard -> Settings -> API -> service_role (secret)
+    supabase_service_role_key: str = Field(default="", description="Supabase service role key (admin use only)")
+    supabase_url: str = Field(default="", description="https://your-project.supabase.co")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
 
-    def get_active_api_key(self) -> str:
-        """Return the API key for the active LLM provider."""
-        keys = {
-            "openai": self.openai_api_key,
-            "gemini": self.gemini_api_key,
-            "anthropic": self.anthropic_api_key,
-            "groq": self.groq_api_key,
-            "huggingface": self.huggingface_api_key,
-            "ollama": "",  # no key needed
-        }
-        return keys.get(self.llm_provider, "")
-
 
 @lru_cache()
 def get_settings() -> Settings:
-    """Cached singleton - import this everywhere."""
+    """Return a cached Settings singleton (reads .env once on first call)."""
     return Settings()
+  
