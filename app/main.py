@@ -229,6 +229,19 @@ app.include_router(router, prefix="/api/v1", tags=["PDF Agent"])
 app.include_router(admin_router, prefix="/api/v1", tags=["Admin"])
 
 
+@app.get("/")
+async def root():
+    """Landing info for the bare URL (this is an API, the UI lives elsewhere)."""
+    return {
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "api_base": "/api/v1",
+    }
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": settings.app_version}
