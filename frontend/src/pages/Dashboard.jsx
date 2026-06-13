@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("insights");
   const [showUpload, setShowUpload] = useState(false);
   const [pendingQuestion, setPendingQuestion] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: documents = [] } = useQuery({
     queryKey: ["documents"],
@@ -76,16 +77,21 @@ export default function Dashboard() {
       <Sidebar
         documents={documents}
         selectedDocId={selectedDoc?.id}
-        onSelectDoc={(doc) => { setSelectedDoc(doc); setShowUpload(false); }}
-        onUploadClick={() => { setShowUpload(true); setSelectedDoc(null); }}
+        onSelectDoc={(doc) => { setSelectedDoc(doc); setShowUpload(false); setSidebarOpen(false); }}
+        onUploadClick={() => { setShowUpload(true); setSelectedDoc(null); setSidebarOpen(false); }}
         onDeleteDoc={handleDelete}
         isAdmin={isAdmin}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* flex-1 flex-col overflow-hidden min-h-0 lets the Tabs root fill the
           viewport; tabs themselves use absolute inset-0 for reliable sizing */}
       <div className="flex flex-1 flex-col overflow-hidden min-h-0">
-        <Header document={!showUpload ? selectedDoc : null} />
+        <Header
+          document={!showUpload ? selectedDoc : null}
+          onMenuClick={() => setSidebarOpen(true)}
+        />
 
         {showUpload || !selectedDoc ? (
           <UploadZone onSuccess={handleUploadSuccess} />
@@ -95,8 +101,8 @@ export default function Dashboard() {
             onValueChange={setActiveTab}
             className="flex flex-1 flex-col overflow-hidden min-h-0"
           >
-            <div className="border-b bg-white px-5 py-2 flex-shrink-0">
-              <TabsList className="h-8">
+            <div className="border-b bg-white px-3 py-2 flex-shrink-0 overflow-x-auto sm:px-5">
+              <TabsList className="h-8 w-max">
                 <TabsTrigger value="insights" className="text-xs gap-1.5">
                   <LayoutGrid className="h-3.5 w-3.5" /> Insights
                 </TabsTrigger>

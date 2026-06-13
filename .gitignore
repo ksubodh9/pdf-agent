@@ -23,3 +23,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 SECURITY_REVIEW.md
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+*.log
+npm-debug.log*

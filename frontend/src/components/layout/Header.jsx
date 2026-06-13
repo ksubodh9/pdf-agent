@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText, Menu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+function MenuButton({ onMenuClick }) {
+  return (
+    <button
+      onClick={onMenuClick}
+      className="-ml-1 shrink-0 rounded-md p-1.5 text-slate-600 hover:bg-slate-100 md:hidden"
+      aria-label="Open menu"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
+  );
+}
 
 const API_BASE = (window._env_?.VITE_API_BASE || import.meta.env.VITE_API_BASE || "http://localhost:8000/api/v1")
   .replace(/\/api\/v1\/?$/, "");
@@ -25,7 +37,7 @@ function BackendStatus() {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const label  = { checking: "Connecting…", ok: "Backend connected", error: "Backend offline" }[status];
+  const label  = { checking: "Connecting…", ok: "Live", error: "Backend offline" }[status];
   const dot    = { checking: "bg-amber-400 animate-pulse", ok: "bg-green-500", error: "bg-red-500" }[status];
   const text   = { checking: "text-amber-600", ok: "text-green-700", error: "text-red-600" }[status];
 
@@ -47,11 +59,17 @@ function BackendStatus() {
   );
 }
 
-export default function Header({ document }) {
+export default function Header({ document, onMenuClick }) {
   if (!document) {
     return (
-      <div className="flex h-14 items-center justify-between border-b bg-white px-6">
-        <p className="text-sm text-muted-foreground">Upload a document to get started — PDF, Word, Excel, PowerPoint, CSV, HTML, or image</p>
+      <div className="flex h-14 items-center justify-between gap-3 border-b bg-white px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <MenuButton onMenuClick={onMenuClick} />
+          <p className="truncate text-sm text-muted-foreground">
+            <span className="sm:hidden">Upload a document to get started</span>
+            <span className="hidden sm:inline">Upload a document to get started — PDF, Word, Excel, PowerPoint, CSV, HTML, or image</span>
+          </p>
+        </div>
         <BackendStatus />
       </div>
     );
@@ -70,7 +88,8 @@ export default function Header({ document }) {
   };
 
   return (
-    <div className="flex h-14 items-center gap-3 border-b bg-white px-6">
+    <div className="flex h-14 items-center gap-2 border-b bg-white px-4 sm:gap-3 sm:px-6">
+      <MenuButton onMenuClick={onMenuClick} />
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 shrink-0">
         <FileText className="h-4 w-4 text-indigo-600" />
       </div>
