@@ -52,7 +52,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db() -> None:
     """Create all tables and run lightweight schema migrations."""
-    from app.models import document, usage   # noqa: F401 — registers models
+    from app.models import document, usage, feedback   # noqa: F401 — registers models
     Base.metadata.create_all(bind=engine)
     _migrate_schema()
 
