@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Sidebar({
   documents = [],
@@ -164,6 +165,7 @@ export default function Sidebar({
             <p className="truncate text-xs font-medium text-slate-200">{user?.email}</p>
             {isAdmin && <p className="text-[10px] text-indigo-400 font-medium">Admin</p>}
           </div>
+          <ThemeToggle variant="dark" className="h-7 w-7" />
           <button
             onClick={handleSignOut}
             className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"

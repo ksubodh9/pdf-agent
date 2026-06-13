@@ -8,6 +8,18 @@
     <!-- Runtime env vars injected by nginx entrypoint (Docker).
          In local Vite dev this file doesn't exist and is silently ignored. -->
     <script src="/env-config.js" onerror="void 0"></script>
+    <!-- Apply theme before paint to avoid a flash of the wrong color scheme. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("docintel-theme");
+          var dark = stored === "dark" ||
+            (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

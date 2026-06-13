@@ -33,18 +33,18 @@ export default function Login() {
   return (
     <AuthLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-        <p className="mt-1.5 text-sm text-slate-500">Sign in to your DocIntel account</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Welcome back</h1>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Sign in to your DocIntel account</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
             {error}
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
           <Input
             type="email"
             placeholder="you@example.com"
@@ -55,7 +55,7 @@ export default function Login() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
           <div className="relative">
             <Input
               type={showPwd ? "text" : "password"}
@@ -68,7 +68,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -80,7 +80,7 @@ export default function Login() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
         No account?{" "}
         <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
           Create one

@@ -37,8 +37,8 @@ export default function Signup() {
           <div className="mb-4 flex justify-center">
             <CheckCircle2 className="h-16 w-16 text-green-500" />
           </div>
-          <h2 className="mb-2 text-xl font-bold text-slate-900">Check your email</h2>
-          <p className="mb-6 text-sm text-slate-500">
+          <h2 className="mb-2 text-xl font-bold text-slate-900 dark:text-slate-100">Check your email</h2>
+          <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
             We sent a confirmation link to <strong>{email}</strong>.
             Click it to activate your account, then sign in.
           </p>
@@ -53,18 +53,18 @@ export default function Signup() {
   return (
     <AuthLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create your account</h1>
-        <p className="mt-1.5 text-sm text-slate-500">Free to start — no credit card required</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Create your account</h1>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Free to start — no credit card required</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
             {error}
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Full name</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Full name</label>
           <Input
             type="text"
             placeholder="Jane Smith"
@@ -75,7 +75,7 @@ export default function Signup() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
           <Input
             type="email"
             placeholder="jane@example.com"
@@ -85,7 +85,7 @@ export default function Signup() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
           <div className="relative">
             <Input
               type={showPwd ? "text" : "password"}
@@ -98,7 +98,7 @@ export default function Signup() {
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -110,7 +110,7 @@ export default function Signup() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
         Already have an account?{" "}
         <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
           Sign in

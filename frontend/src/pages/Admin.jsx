@@ -16,10 +16,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 
 function StatCard({ icon: Icon, label, value, sub, color = "indigo" }) {
   const colors = {
-    indigo: "bg-indigo-50 text-indigo-600",
-    green: "bg-green-50 text-green-600",
-    amber: "bg-amber-50 text-amber-600",
-    violet: "bg-violet-50 text-violet-600",
+    indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
+    green: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
+    amber: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
+    violet: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
   };
   return (
     <Card>
@@ -28,9 +28,9 @@ function StatCard({ icon: Icon, label, value, sub, color = "indigo" }) {
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900">{value ?? <Loader2 className="h-5 w-5 animate-spin text-slate-300" />}</p>
-          <p className="text-sm text-slate-500">{label}</p>
-          {sub && <p className="text-xs text-slate-400">{sub}</p>}
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value ?? <Loader2 className="h-5 w-5 animate-spin text-slate-300" />}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+          {sub && <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
         </div>
       </CardContent>
     </Card>
@@ -41,33 +41,33 @@ function UserRow({ user, onExpand, expanded }) {
   return (
     <>
       <tr
-        className="hover:bg-slate-50 cursor-pointer transition-colors"
+        className="hover:bg-slate-50 cursor-pointer transition-colors dark:hover:bg-slate-800/50"
         onClick={() => onExpand(user.user_id)}
       >
         <td className="px-4 py-3">
           <div className="flex items-center gap-2.5">
             <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[10px]">
+              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[10px] dark:bg-indigo-900 dark:text-indigo-300">
                 {getInitials(user.email)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-slate-800">{user.email}</span>
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{user.email}</span>
           </div>
         </td>
-        <td className="px-4 py-3 text-sm text-slate-600">{formatDate(user.joined_at)}</td>
+        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(user.joined_at)}</td>
         <td className="px-4 py-3">
           <Badge variant="indigo" className="text-[10px]">{user.documents_count} docs</Badge>
         </td>
         <td className="px-4 py-3">
-          <span className="text-sm text-slate-600">{user.api_calls_count} calls</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400">{user.api_calls_count} calls</span>
         </td>
-        <td className="px-4 py-3 text-sm text-slate-400">{user.last_active ? formatRelative(user.last_active) : "—"}</td>
-        <td className="px-4 py-3 text-slate-400">
+        <td className="px-4 py-3 text-sm text-slate-400 dark:text-slate-500">{user.last_active ? formatRelative(user.last_active) : "—"}</td>
+        <td className="px-4 py-3 text-slate-400 dark:text-slate-500">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </td>
       </tr>
       {expanded && (
-        <tr className="bg-slate-50">
+        <tr className="bg-slate-50 dark:bg-slate-800/40">
           <td colSpan={6} className="px-4 pb-3">
             <UserDocuments userId={user.user_id} />
           </td>
@@ -83,17 +83,17 @@ function UserDocuments({ userId }) {
     queryFn: () => getAdminUserDocuments(userId),
   });
 
-  if (isLoading) return <div className="py-3 flex items-center gap-2 text-xs text-slate-400"><Loader2 className="h-3 w-3 animate-spin" />Loading documents...</div>;
-  if (!data?.length) return <p className="py-3 text-xs text-slate-400 italic">No documents yet.</p>;
+  if (isLoading) return <div className="py-3 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500"><Loader2 className="h-3 w-3 animate-spin" />Loading documents...</div>;
+  if (!data?.length) return <p className="py-3 text-xs text-slate-400 dark:text-slate-500 italic">No documents yet.</p>;
 
   return (
     <div className="flex flex-wrap gap-2 py-2">
       {data.map((doc) => (
-        <div key={doc.id} className="flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs text-slate-600">
+        <div key={doc.id} className="flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <FileText className="h-3 w-3 text-slate-400" />
           <span className="max-w-[200px] truncate">{doc.original_filename || doc.filename}</span>
           {doc.document_type && <Badge variant="secondary" className="text-[9px] ml-1">{doc.document_type}</Badge>}
-          <span className="text-slate-400">{formatRelative(doc.created_at)}</span>
+          <span className="text-slate-400 dark:text-slate-500">{formatRelative(doc.created_at)}</span>
         </div>
       ))}
     </div>
@@ -121,9 +121,9 @@ export default function Admin() {
     }));
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 overflow-hidden">
+    <div className="flex h-screen flex-col bg-slate-50 overflow-hidden dark:bg-slate-950">
       {/* Header */}
-      <div className="flex h-14 items-center gap-3 border-b bg-white px-6 shrink-0">
+      <div className="flex h-14 items-center gap-3 border-b bg-white px-6 shrink-0 dark:bg-slate-900">
         <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -131,8 +131,8 @@ export default function Admin() {
           <FileText className="h-3.5 w-3.5 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-900">Admin Dashboard</p>
-          <p className="text-xs text-slate-400">{user?.email}</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Admin Dashboard</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{user?.email}</p>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ export default function Admin() {
           </CardHeader>
           <CardContent className="p-0">
             {usersLoading ? (
-              <div className="flex items-center justify-center py-10 gap-2 text-slate-400">
+              <div className="flex items-center justify-center py-10 gap-2 text-slate-400 dark:text-slate-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">Loading users...</span>
               </div>
@@ -183,7 +183,7 @@ export default function Admin() {
                   <thead>
                     <tr className="border-b text-left">
                       {["User", "Joined", "Documents", "API Calls", "Last active", ""].map((h) => (
-                        <th key={h} className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        <th key={h} className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                           {h}
                         </th>
                       ))}
@@ -199,7 +199,7 @@ export default function Admin() {
                       />
                     ))}
                     {users.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">No users yet.</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">No users yet.</td></tr>
                     )}
                   </tbody>
                 </table>

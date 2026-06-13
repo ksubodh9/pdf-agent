@@ -65,8 +65,8 @@ export default function UploadZone({ onSuccess }) {
         className={cn(
           "flex flex-col items-center justify-center w-full max-w-lg rounded-2xl border-2 border-dashed transition-all cursor-pointer p-10 text-center",
           isDragActive
-            ? "border-indigo-500 bg-indigo-50"
-            : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50 bg-white",
+            ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40"
+            : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50 bg-white dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500 dark:hover:bg-slate-800/60",
           uploading && "pointer-events-none opacity-70"
         )}
       >
@@ -75,10 +75,10 @@ export default function UploadZone({ onSuccess }) {
         {uploading ? (
           <>
             <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mb-4" />
-            <p className="text-sm font-medium text-slate-700">Processing document...</p>
-            <p className="text-xs text-slate-400 mt-1">Extracting, chunking and embedding</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Processing document...</p>
+            <p className="text-xs text-slate-400 mt-1 dark:text-slate-500">Extracting, chunking and embedding</p>
             {progress > 0 && (
-              <div className="mt-4 w-full bg-slate-200 rounded-full h-1.5">
+              <div className="mt-4 w-full bg-slate-200 rounded-full h-1.5 dark:bg-slate-700">
                 <div
                   className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
@@ -88,22 +88,22 @@ export default function UploadZone({ onSuccess }) {
           </>
         ) : (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50 mb-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50 mb-4 dark:bg-indigo-950">
               {isDragActive
-                ? <FileText className="h-7 w-7 text-indigo-600" />
-                : <Upload className="h-7 w-7 text-indigo-600" />}
+                ? <FileText className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+                : <Upload className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />}
             </div>
-            <p className="text-base font-semibold text-slate-800 mb-1">
+            <p className="text-base font-semibold text-slate-800 mb-1 dark:text-slate-100">
               {isDragActive ? "Drop your document here" : "Upload a Document"}
             </p>
-            <p className="text-sm text-slate-500">Drag & drop or click to browse</p>
-            <p className="text-xs text-slate-400 mt-2">{FORMAT_HINT} · max 50 MB</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Drag & drop or click to browse</p>
+            <p className="text-xs text-slate-400 mt-2 dark:text-slate-500">{FORMAT_HINT} · max 50 MB</p>
           </>
         )}
       </div>
 
       {error && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 max-w-lg w-full">
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 max-w-lg w-full dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>

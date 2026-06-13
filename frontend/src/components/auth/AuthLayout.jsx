@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FileText, Lightbulb, MessagesSquare, GitCompareArrows } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const HIGHLIGHTS = [
   { icon: Lightbulb, text: "Insights from PDFs, Word, Excel, PowerPoint, CSV & images" },
@@ -50,7 +51,10 @@ export default function AuthLayout({ children }) {
       </div>
 
       {/* Form panel */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2">
+      <div className="relative flex w-full flex-col items-center justify-center bg-white px-6 py-12 dark:bg-slate-950 lg:w-1/2">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <Link to="/" className="mb-8 flex items-center justify-center gap-2 lg:hidden">

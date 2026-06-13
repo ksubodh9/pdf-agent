@@ -8,7 +8,7 @@ import { classifyDocument, summarizeDocument, extractMetadata, getSuggestedQuest
 import { toast } from "@/components/ui/toaster";
 
 function Chips({ items, color }) {
-  if (!items?.length) return <span className="text-xs text-slate-400 italic">None found</span>;
+  if (!items?.length) return <span className="text-xs text-slate-400 dark:text-slate-500 italic">None found</span>;
   return (
     <div className="flex flex-wrap gap-1.5 mt-1">
       {items.map((item) => (
@@ -33,9 +33,9 @@ function MetaGrid({ metadata }) {
   return (
     <div className="grid grid-cols-2 gap-2 mt-2">
       {items.map(([key, val]) => (
-        <div key={key} className="rounded-lg bg-slate-50 border px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{key}</p>
-          <p className="text-sm font-semibold text-slate-800 truncate">{String(val)}</p>
+        <div key={key} className="rounded-lg bg-slate-50 border px-3 py-2 dark:bg-slate-800/50">
+          <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-medium">{key}</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{String(val)}</p>
         </div>
       ))}
     </div>
@@ -121,7 +121,7 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
         <Card>
           <CardContent className="pt-6 flex flex-col items-center gap-3 py-8">
             <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
-            <p className="text-sm text-slate-600">Analysing document…</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">Analysing document…</p>
             <Progress value={state.progress} className="w-full max-w-xs" />
           </CardContent>
         </Card>
@@ -129,18 +129,18 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
 
       {/* ── Error ────────────────────────────────────────────────────────── */}
       {state.step === "error" && (
-        <div className="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+        <div className="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 dark:bg-red-950/40 dark:border-red-900">
           <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-red-800">Analysis failed</p>
-            <p className="text-xs text-red-600 mt-0.5 break-words">{state.error}</p>
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">Analysis failed</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 break-words">{state.error}</p>
           </div>
         </div>
       )}
 
       {/* ── Empty state ───────────────────────────────────────────────────── */}
       {!hasSomething && !isRunning && state.step !== "error" && (
-        <div className="text-center py-10 text-slate-400 text-sm">
+        <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-sm">
           Click <strong>Analyse document</strong> to classify, summarise, and extract topics from this document.
         </div>
       )}
@@ -153,11 +153,11 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <p className="text-xl font-bold text-slate-900">{results.classify.document_type}</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{results.classify.document_type}</p>
               <div className="flex-1">
-                <p className="text-xs text-slate-500 mb-1">Confidence</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Confidence</p>
                 <Progress value={(results.classify.confidence || 0) * 100} />
-                <p className="text-xs font-medium text-slate-600 mt-0.5">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-0.5">
                   {((results.classify.confidence || 0) * 100).toFixed(0)}%
                 </p>
               </div>
@@ -173,17 +173,17 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
             <CardTitle className="text-sm">Summary</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <p className="text-sm text-slate-700 leading-relaxed">{results.summary.short_summary}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{results.summary.short_summary}</p>
             {results.summary.detailed_summary && (
               <div>
                 <button
                   onClick={() => setShowDetail((v) => !v)}
-                  className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:text-indigo-500"
+                  className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-500"
                 >
                   {showDetail ? "▲ Hide" : "▼ Show"} detailed analysis
                 </button>
                 {showDetail && (
-                  <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
                     {results.summary.detailed_summary}
                   </p>
                 )}
@@ -191,15 +191,15 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
             )}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t">
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mb-1">Topics</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-medium mb-1">Topics</p>
                 <Chips items={results.summary.topics} color="indigo" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mb-1">Keywords</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-medium mb-1">Keywords</p>
                 <Chips items={results.summary.keywords} color="green" />
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mb-1">Entities</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-medium mb-1">Entities</p>
                 <Chips items={results.summary.entities} color="amber" />
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function InsightsPanel({ document, onAskQuestion, onAnalysisCompl
               <button
                 key={i}
                 onClick={() => onAskQuestion?.(q)}
-                className="w-full text-left rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-900 transition-colors"
+                className="w-full text-left rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-900 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-indigo-950/40 dark:hover:border-indigo-700 dark:hover:text-indigo-300"
               >
                 {q}
               </button>

@@ -32,16 +32,16 @@ export function Toaster() {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 rounded-lg border p-4 shadow-lg animate-fade-in bg-white",
-              t.variant === "success" && "border-green-200 bg-green-50",
-              t.variant === "error" && "border-red-200 bg-red-50",
-              t.variant === "info" && "border-blue-200 bg-blue-50",
+              "pointer-events-auto flex items-start gap-3 rounded-lg border p-4 shadow-lg animate-fade-in bg-white text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100",
+              t.variant === "success" && "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/60",
+              t.variant === "error" && "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/60",
+              t.variant === "info" && "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/60",
             )}
           >
             <Icon className={cn("mt-0.5 h-4 w-4 shrink-0",
-              t.variant === "success" && "text-green-600",
-              t.variant === "error" && "text-red-600",
-              t.variant === "info" && "text-blue-600",
+              t.variant === "success" && "text-green-600 dark:text-green-400",
+              t.variant === "error" && "text-red-600 dark:text-red-400",
+              t.variant === "info" && "text-blue-600 dark:text-blue-400",
             )} />
             <div className="flex-1 text-sm">
               {t.title && <div className="font-semibold">{t.title}</div>}

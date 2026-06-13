@@ -73,7 +73,7 @@ export default function Dashboard() {
   }, [queryClient]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <Sidebar
         documents={documents}
         selectedDocId={selectedDoc?.id}
@@ -101,7 +101,7 @@ export default function Dashboard() {
             onValueChange={setActiveTab}
             className="flex flex-1 flex-col overflow-hidden min-h-0"
           >
-            <div className="border-b bg-white px-3 py-2 flex-shrink-0 overflow-x-auto sm:px-5">
+            <div className="border-b bg-white px-3 py-2 flex-shrink-0 overflow-x-auto dark:bg-slate-900 sm:px-5">
               <TabsList className="h-8 w-max">
                 <TabsTrigger value="insights" className="text-xs gap-1.5">
                   <LayoutGrid className="h-3.5 w-3.5" /> Insights

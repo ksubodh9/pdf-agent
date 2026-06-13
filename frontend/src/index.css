@@ -25,6 +25,28 @@
     --ring: 239 84% 67%;
     --radius: 0.5rem;
   }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 44% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 44% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 239 84% 67%;
+  }
 }
 
 @layer base {
@@ -33,6 +55,7 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  html { @apply transition-colors; }
 }
 
 /* Smooth scrollbar */
@@ -40,6 +63,8 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
+.dark ::-webkit-scrollbar-thumb { @apply bg-slate-700; }
+.dark ::-webkit-scrollbar-thumb:hover { @apply bg-slate-600; }
 
 /* Chat messages */
 .prose-chat p { margin: 0; }
@@ -49,4 +74,8 @@
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   @apply animate-shimmer rounded;
+}
+.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
 }
