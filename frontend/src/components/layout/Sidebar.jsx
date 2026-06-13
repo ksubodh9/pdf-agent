@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FileText, Upload, LayoutDashboard, ShieldCheck,
-  LogOut, Trash2, ChevronRight, Clock, Plus
+  LogOut, Trash2, ChevronRight, Clock, Plus, X
 } from "lucide-react";
 import { cn, formatRelative, formatBytes } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,8 @@ export default function Sidebar({
   onUploadClick,
   onDeleteDoc,
   isAdmin,
+  open = false,
+  onClose,
 }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -29,16 +31,41 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="flex flex-col w-64 bg-slate-900 text-slate-100 h-screen overflow-hidden shrink-0">
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(
+          "flex flex-col w-64 bg-slate-900 text-slate-100 h-screen overflow-hidden shrink-0",
+          // Desktop: static column. Mobile: fixed slide-over drawer.
+          "fixed inset-y-0 left-0 z-50 transition-transform duration-200 md:static md:z-auto md:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-slate-800">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
           <FileText className="h-4 w-4 text-white" />
         </div>
-        <div>
+        <div className="flex-1">
           <span className="font-semibold text-white text-sm">DocIntel</span>
           <p className="text-[10px] text-slate-500 leading-tight">Document Intelligence</p>
         </div>
+        {/* Close drawer (mobile only) */}
+        <button
+          onClick={onClose}
+          className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* New upload button */}
@@ -147,5 +174,6 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }
